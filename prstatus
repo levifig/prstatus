@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+
+org="reddit"
+repo="reddit"
+target="repos"
+type="pulls"
+auth_token="fb9a994e5b8291b0291d8a2e86c0bca8d58f1723"
+
+endpoint=$target/$org/$repo/$type
+
+request()
+{
+  curl \
+    https://api.github.com/$endpoint \
+    -H "Authorization: token $auth_token"
+}
+
+
+request
