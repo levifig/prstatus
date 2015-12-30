@@ -1,20 +1,77 @@
 #!/usr/bin/env bash
 
+# Variable initialization
+token=
+repo=
+prid=
+params=
 
-org="reddit"
-repo="reddit"
-target="repos"
-type="pulls"
-auth_token="fb9a994e5b8291b0291d8a2e86c0bca8d58f1723"
+# Argument evaluation
+function arg_check {
+  if [ -z "$token" ]; then
+    echo -e "OAuth token not configured"
+    echo -e "Example: ./prstatus -t TOKEN"
+    exit
+  fi
 
-endpoint=$target/$org/$repo/$type
+  if [ -z "$repo" ]; then
+    echo -e "Repository not specified"
+    echo -e "Example: ./prstatus -r reddit/reddit"
+    exit
+  fi
 
-request()
-{
-  curl \
-    https://api.github.com/$endpoint \
-    -H "Authorization: token $auth_token"
+  if [ -z "$prid" ]; then
+    api_call="repos$target/$repo/pulls"
+  else
+    api_call="repos$target/$repo/pulls/$prid"
+  fi
 }
 
+# API REQUEST
+function request {
+  arg_check
+
+  # DEBUG: show parsed arguments and exit
+  # TODO: show "nil" for empty arguments
+  if [ "$debug" == true ]; then
+    echo " ===== Repo set to: $repo"
+    echo " ===== PR set to: $prid"
+    echo " ===== API call set to: $api_call"
+    echo " ===== Auth token set to: $token"
+
+    exit
+  fi
+  
+  curl -s \
+    -G "https://api.github.com/$api_call?$params" \
+    -H "Authorization: token $token"
+}
+
+
+# ARGUMENT PARSING
+while :; do
+  case $1 in
+    -r | --repo )
+      repo="$2"
+      shift
+      ;;
+    -p | --pullrequest )
+      prid="$2"
+      shift
+      ;;
+    -t | --token )
+      token="$2"
+      shift
+      ;;
+    -d | --debug )
+      debug=true
+      shift
+      ;;
+    * )
+      # No more arguments to parse
+      break
+  esac
+  shift
+done
 
 request
