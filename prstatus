@@ -91,32 +91,50 @@ relative_time()
   echo $(( ( $(date +%s) - $(date -d "$dt" +%s) ) /(24 * 60 * 60 ) ))
 }
 
-
+## SHOW DETAILED INFO OF A PULL REQUEST
 show_details()
 {
-  echo "SPECIFIC PR DETAIL"
+  local pr=$(echo $(api_request))
+  local message=$(echo $pr | jq -rc .message)
+
+  if [[ "$message" == "Not Found" ]]; then
+    echo -e "Pull request not found. Please try another ID."
+    exit;
+  fi
 
   local keys=(
     title number created_at updated_at closed_at merged_at html_url
-    merged mergeable mergeable_state merged_by comments review_comments
-    commits additions deletions changed_files
+    merged mergeable mergeable_state comments review_comments
+    commits additions deletions changed_files state
   )
 
-  local author=$(echo $pr_details | jq -rc .user.login)
+  local username=$(echo $pr | jq -rc .user.login)
+  local merged_by=$(echo $pr | jq -rc .merged_by.login)
   for key in ${keys[@]}; do
-    local ${key}="$( echo $pr_details | jq -rc .$key)"
+    local ${key}="$( echo $pr | jq -rc .$key)"
   done
-  
-  echo $title
+
+  if [[ "$merged" == true ]]; then
+    local merger_info="Merged? ${merged^^}\tMerged by: ${merged_by} ($(relative_time ${merged_at}) days ago)"
+  else
+    local merger_info="Mergeable: ${mergeable^^} (${mergeable_state})"
+  fi
+
+  local title="[PR#$number] \"${title^^}\""
+  echo -e "\n$title"
+  printf '%*s\n' "${COLUMNS:-${#title}}" '' | tr ' ' =
+  echo -e "Status: ${state^^}\t${merger_info}\n"
+  echo -e "Submitted by ${_bold}${username[$id]}${_reset} $(relative_time ${created_at}) days ago (last updated $(relative_time ${updated_at}) days ago)."
+  echo -e "Changes: ${commits} commit(s), with ${additions} additions and ${deletions} deletions across ${changed_files} files."
+  echo -e "Link: ${html_url}" 
+  echo -e ""
 }
 
 
-## SHOW SUMMARY OF OPEN PRs
+## SHOW SUMMARY OF OPEN PULL REQUESTS
 show_summary()
 {
-  echo -e "Fetching information..."
-  echo -e "Please wait..."
-  prs=$(echo $(api_request))
+  local prs=$(echo $(api_request))
   
   local pr_id=($( echo $prs | jq -rc '.[] | .number' ))
   local created_at=($( echo $prs | jq -rc '.[] | .created_at' ))
