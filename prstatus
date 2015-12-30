@@ -1,22 +1,31 @@
 #!/usr/bin/env bash
 
-# Variable initialization
-token=
-repo=
-prid=
-params=
+## Enter your OAuth token here to avoid having
+## to re-enter in the command line every time
+token="fb9a994e5b8291b0291d8a2e86c0bca8d58f1723"
+
+
+
+#####################################
+### DO NOT EDIT BEYOND THIS POINT ###
+#####################################
+
+# FORMATTING
+_bold=$(tput bold) 
+_reset=$(tput sgr0)
+
 
 # Argument evaluation
 function arg_check {
   if [ -z "$token" ]; then
-    echo -e "OAuth token not configured"
-    echo -e "Example: ./prstatus -t TOKEN"
+    echo -e "${_bold}ERROR: OAuth token not specified (required)${_reset}\n"
+    show_help
     exit
   fi
 
   if [ -z "$repo" ]; then
-    echo -e "Repository not specified"
-    echo -e "Example: ./prstatus -r reddit/reddit"
+    echo -e "${_bold}ERROR: Repository not specified (required)${_reset}\n"
+    show_help
     exit
   fi
 
@@ -26,6 +35,27 @@ function arg_check {
     api_call="repos$target/$repo/pulls/$prid"
   fi
 }
+
+
+# USAGE HELP
+show_help() {
+  cat << EOF
+Usage: $0 [-dh] [-t TOKEN] [-r REPO]...
+Options:
+    -h | --help                 display this syntax information and exit
+    -d | --debug                display API request details and exit
+    -t | --token TOKEN          OAuth token ${_bold}(required)${_reset}
+                                  More info: http://git.io/vmNUX
+                                  Example:  $0 -t e72e16c7e42f292c6912e7710c8
+    -r | --repo USER/REPO       Target repository ${_bold}(required)${_reset}
+                                  Note: specify repo\'s owner username OR organization
+                                  Example:  $0 -r reddit/reddit
+                                            $0 -r levifig/prstatus
+    -p | --pullrequest ID       Specify unique pull request by its ID
+                                  Example:  $0 -p 1449
+EOF
+}
+
 
 # API REQUEST
 function request {
@@ -66,6 +96,10 @@ while :; do
     -d | --debug )
       debug=true
       shift
+      ;;
+    -h |--help | -\? )
+      show_help
+      exit
       ;;
     * )
       # No more arguments to parse
