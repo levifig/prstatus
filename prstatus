@@ -2,21 +2,21 @@
 
 ## Enter your OAuth token here to avoid having
 ## to re-enter in the command line every time
-token="fb9a994e5b8291b0291d8a2e86c0bca8d58f1723"
-
+token=""
 
 
 #####################################
 ### DO NOT EDIT BEYOND THIS POINT ###
 #####################################
 
-# FORMATTING
+## FORMATTING
 _bold=$(tput bold) 
 _reset=$(tput sgr0)
 
 
-# Argument evaluation
-function arg_check {
+## Argument validation
+arg_check()
+{
   if [ -z "$token" ]; then
     echo -e "${_bold}ERROR: OAuth token not specified (required)${_reset}\n"
     show_help
@@ -30,15 +30,18 @@ function arg_check {
   fi
 
   if [ -z "$prid" ]; then
-    api_call="repos$target/$repo/pulls"
+    endpoint="repos$target/$repo/pulls"
+    pr_display=false # TODO
   else
-    api_call="repos$target/$repo/pulls/$prid"
+    endpoint="repos$target/$repo/pulls/$prid"
+    pr_display=true # TODO
   fi
 }
 
 
-# USAGE HELP
-show_help() {
+## USAGE HELP
+show_help() 
+{
   cat << EOF
 Usage: $0 [-dh] [-t TOKEN] [-r REPO]...
 Options:
@@ -57,28 +60,37 @@ EOF
 }
 
 
-# API REQUEST
-function request {
-  arg_check
-
+## DEBUG
+debug() 
+{
   # DEBUG: show parsed arguments and exit
   # TODO: show "nil" for empty arguments
-  if [ "$debug" == true ]; then
-    echo " ===== Repo set to: $repo"
-    echo " ===== PR set to: $prid"
-    echo " ===== API call set to: $api_call"
-    echo " ===== Auth token set to: $token"
+  echo " ===== Repo set to: $repo"
+  echo " ===== PR set to: $prid"
+  echo " ===== API endpoint set to: $endpoint"
+  echo " ===== Auth token set to: $token"
+  exit
+}
 
-    exit
-  fi
-  
+
+## API REQUEST
+request() 
+{
+  arg_check
   curl -s \
-    -G "https://api.github.com/$api_call?$params" \
+    -G "https://api.github.com/$endpoint?$params" \
     -H "Authorization: token $token"
 }
 
 
-# ARGUMENT PARSING
+gh_response() 
+{
+  echo $(request) | jq -c '.[] | { id: .number, title: .title }'
+}
+
+main() { gh_response; }
+
+## ARGUMENT PARSING
 while :; do
   case $1 in
     -r | --repo )
@@ -94,7 +106,7 @@ while :; do
       shift
       ;;
     -d | --debug )
-      debug=true
+      debug
       shift
       ;;
     -h |--help | -\? )
@@ -103,9 +115,15 @@ while :; do
       ;;
     * )
       # No more arguments to parse
+      main
       break
   esac
   shift
 done
 
-request
+
+## ===== TODO ======
+## - Implement output format (e.g. json, csv, etc)
+##   for cleaner integration with other scripts
+##
+## -
