@@ -16,6 +16,25 @@ _reset=$(tput sgr0)
 
 
 ## Argument validation
+
+dependency_check()
+{
+  _JQ_PATH=$(which jq)
+
+  _CURL_PATH=$(which curl)
+
+  if [ -z "$_JQ_PATH" ]; then
+    echo -e "${_bold}This utility makes use of the jq utility, but it was not found in your path. \n(To install it on OS X, execute: brew install jq)${_reset}\n"
+    exit
+  fi
+
+  if [ -z "$_CURL_PATH" ]; then
+    echo -e "${_bold}This utility makes use of the curl utility, but it was not found in your path. \n(To install it on OS X, execute: brew install curl)${_reset}\n"
+    exit
+  fi
+
+}
+
 arg_check()
 {
   if [ -z "$token" ]; then
@@ -155,6 +174,8 @@ show_summary()
 
 main()
 {
+  dependency_check
+
   if [ -z "$prid" ]; then
     show_summary
   else
