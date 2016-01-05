@@ -179,8 +179,7 @@ while :; do
       shift
       ;;
     -d | --debug )
-      debug
-      shift
+      run_debug=true
       ;;
     -h |--help | -\? )
       show_help
@@ -188,6 +187,9 @@ while :; do
       ;;
     * )
       # No more arguments to parse
+      if [ "$run_debug" ]; then
+        debug
+      fi
       main
       break
   esac
