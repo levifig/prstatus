@@ -11,7 +11,7 @@ repo=""
 #####################################
 
 ## FORMATTING
-_bold=$(tput bold) 
+_bold=$(tput bold)
 _reset=$(tput sgr0)
 
 
@@ -35,12 +35,12 @@ arg_check()
   else
     endpoint="repos$target/$repo/pulls/$prid"
   fi
-  
+
   }
 
 
 ## USAGE HELP
-show_help() 
+show_help()
 {
   cat << EOF
 Usage: $0 [-dh] [-t TOKEN] [-r REPO]...
@@ -61,7 +61,7 @@ EOF
 
 
 ## DEBUG
-debug() 
+debug()
 {
   arg_check
   # DEBUG: show parsed arguments and exit
@@ -75,7 +75,7 @@ debug()
 
 
 ## API REQUEST
-api_request() 
+api_request()
 {
   arg_check
   curl -s \
@@ -126,7 +126,7 @@ show_details()
   echo -e "Status: ${state^^}\t${merger_info}\n"
   echo -e "Submitted by ${_bold}${username[$id]}${_reset} $(relative_time ${created_at}) days ago (last updated $(relative_time ${updated_at}) days ago)."
   echo -e "Changes: ${commits} commit(s), with ${additions} additions and ${deletions} deletions across ${changed_files} files."
-  echo -e "Link: ${html_url}" 
+  echo -e "Link: ${html_url}"
   echo -e ""
 }
 
@@ -135,16 +135,16 @@ show_details()
 show_summary()
 {
   local prs=$(echo $(api_request))
-  
+
   local pr_id=($( echo $prs | jq -rc '.[] | .number' ))
   local created_at=($( echo $prs | jq -rc '.[] | .created_at' ))
   local updated_at=($( echo $prs | jq -rc '.[] | .updated_at' ))
   local repo_base=($( echo $prs | jq -rc '.[] | .base.label' ))
   local pr_link=($( echo $prs | jq -rc '.[] | .html_url' ))
   local username=($( echo $prs | jq -rc '.[] | .user.login' ))
-  
+
   ## Workaround to handle spaces
-  local title=(); mapfile -t title <<< "$( echo $prs | jq -rc '.[] | .title' )"   
+  local title=(); mapfile -t title <<< "$( echo $prs | jq -rc '.[] | .title' )"
 
   for id in ${!pr_id[*]}; do
     echo -e "\n#${pr_id[$id]}\t\"${title[$id]}\" [${repo_base[$id]}] (${pr_link[$id]})"
@@ -153,10 +153,10 @@ show_summary()
 }
 
 
-main() 
-{ 
+main()
+{
   if [ -z "$prid" ]; then
-    show_summary 
+    show_summary
   else
     show_details
   fi
@@ -179,8 +179,7 @@ while :; do
       shift
       ;;
     -d | --debug )
-      debug
-      shift
+      run_debug=true
       ;;
     -h |--help | -\? )
       show_help
@@ -188,6 +187,9 @@ while :; do
       ;;
     * )
       # No more arguments to parse
+      if [ "$run_debug" ]; then
+        debug
+      fi
       main
       break
   esac
