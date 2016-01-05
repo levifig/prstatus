@@ -19,10 +19,17 @@ _reset=$(tput sgr0)
 
 dependency_check()
 {
-  _IS_JQ_AVAILABLE=$(which jq)
+  _JQ_PATH=$(which jq)
 
-  if [ -z "$_IS_JQ_AVAILABLE" ]; then
+  _CURL_PATH=$(which curl)
+
+  if [ -z "$_JQ_PATH" ]; then
     echo -e "${_bold}This utility makes use of the jq utility, but it was not found in your path. \n(To install it on OS X, execute: brew install jq)${_reset}\n"
+    exit
+  fi
+
+  if [ -z "$_CURL_PATH" ]; then
+    echo -e "${_bold}This utility makes use of the curl utility, but it was not found in your path. \n(To install it on OS X, execute: brew install curl)${_reset}\n"
     exit
   fi
 
